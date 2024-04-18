@@ -24,17 +24,21 @@ while True:
     top_header = headers[0].split()
     filename = top_header[1]
 
-    # Read contents of html file
-    file = open("pages" + filename)
-    content = file.read()
-    file.close()
+    try:
+        # Read contents of html file
+        file = open("pages" + filename)
+        content = file.read()
+        file.close()
 
-    # Delay response by several seconds so that responses from the server are far slower than cached responses
-    sleep(randint(3, 5))
+        # Delay response by several seconds so that responses from the server are far slower than cached responses
+        sleep(randint(3, 5))
 
-    # Send HTTP response
-    response = 'HTTP/1.1 200 OK\n\n' + content
-    client_connection.sendall(response.encode())
+        # Send HTTP response
+        response = 'HTTP/1.1 200 OK\n\n' + content
+        client_connection.sendall(response.encode())
+    except FileNotFoundError:
+        response = "HTTP/1.1 404 Not Found\r\n"
+        client_connection.send(response.encode())
         
     client_connection.close()
 

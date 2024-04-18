@@ -52,12 +52,12 @@ while 1:
     # Get the file and start measuring RTT
     start_time = time.time()
     content = fetch_file(filename)
-    rtt = time.time() - start_time
+    elapsed = time.time() - start_time
 
     # Respond to client with file contents if found otherwise respond with error message
     if content:
         response = "HTTP/1.1 200 OK\n\n" + content
-        print("Retrieved web page in " + str(round(rtt, 5)) + " seconds")
+        print("Retrieved web page in " + str(round(elapsed, 5)) + " seconds")
     else:
         response = "HTTP/1.1 404 NOT FOUND\n\n File Not Found"
 
