@@ -26,21 +26,23 @@ while True:
 
     try:
         # Read contents of html file
-        file = open("pages" + filename)
+        file = open("pages" + filename, "rb")
         content = file.read()
         file.close()
 
-        # Delay response by several seconds so that responses from the server are far slower than cached responses
-        sleep(randint(3, 5))
+        # For web pages, delay response by several seconds so that responses from the 
+        # server are far slower than cached responses
+        if filename.endswith(".html"):
+            sleep(randint(3, 5))
 
         # Send HTTP response
-        response = 'HTTP/1.1 200 OK\n\n' + content
-        client_connection.sendall(response.encode())
+        response = b'HTTP/1.1 200 OK\r\n\r\n' + content
+        client_connection.sendall(response)
     except FileNotFoundError:
-        response = "HTTP/1.1 404 Not Found\r\n"
+        response = b"HTTP/1.1 404 Not Found\r\n\r\n"
         client_connection.send(response.encode())
-        
-    client_connection.close()
+    finally:
+        client_connection.close()
 
 # Close socket
 server_socket.close()

@@ -1,13 +1,32 @@
 <html>
 <head>
-    <title>Time Page</title>
+    <title>Time of Day Page</title>
 </head>
 <body>
-    <h1>Time Page</h1>
-    <p id="time"></p>
+    <h1>Time of Day</h1>
+    <p id="message"></p>
+    <img id="image" width="800">
     <script>
-      const timeEl = document.getElementById("time")
-      timeEl.innerText = "The time is " + new Date().toTimeString()
+        const imgEl = document.getElementById("image");
+        const messageEl = document.getElementById("message")
+        const hour = new Date().getHours();
+        let timeOfDay;
+
+        if (hour >= 5 && hour < 12) {
+          imgEl.src = "imgs/morning.jpg";
+          timeOfDay = "morning";
+        } else if (hour >= 12 && hour < 18) {
+          imgEl.src = "imgs/afternoon.jpg";
+          timeOfDay = "afternoon";
+        } else if (hour >= 18 && hour < 21) {
+          imgEl.src = "imgs/evening.jpg";
+          timeOfDay = "evening";
+        } else {
+          imgEl.src = "imgs/night.jpg";
+          timeOfDay = "night";
+        }
+
+        messageEl.innerText = "It is now " + timeOfDay + "!"
     </script>
 </body>
 </html>
