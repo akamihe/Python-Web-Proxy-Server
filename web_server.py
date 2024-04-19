@@ -39,7 +39,7 @@ while True:
         response = b'HTTP/1.1 200 OK\r\n\r\n' + content
         client_connection.sendall(response)
     except FileNotFoundError:
-        response = b"HTTP/1.1 404 Not Found\r\n\r\n"
+        response = "HTTP/1.1 404 Not Found\r\n\r\n"
         client_connection.send(response.encode())
     finally:
         client_connection.close()
