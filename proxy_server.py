@@ -1,4 +1,5 @@
 import time
+from pathlib import Path
 from socket import *
 
 def fetch_file(filename):
@@ -10,15 +11,48 @@ def fetch_file(filename):
         print("File " + filename + " fetched successfully from cache.")
         return file_from_cache
     except IOError: # Handle file not existing in cache
-        print("File is not in cache. Fetching from server...")
+        print("File " + filename + " is not in cache. Fetching from server...")
 
         # Create socket and send a request to the web server
+        socket_to_web_server = socket(AF_INET, SOCK_STREAM)
+        socket_to_web_server.connect(('127.0.0.1', 8000))
+
+        request = "GET " + filename + " HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n"
+        socket_to_web_server.send(request.encode())
 
         # Get response from the web server and get contents
+        data = socket_to_web_server.recv(1024)
+        response = b""
 
+        while data:
+            response += data
+            data = socket_to_web_server.recv(1024)
+
+        # Extract response header and data
+        idx = response.find(b'\r\n\r\n')
+        header = response[:idx]
+        data = response[idx + 4:]
+    
         # Close the socket to the web server
+        socket_to_web_server.close()
 
         # Save file in cache
+        if header.decode().startswith("HTTP/1.1 404 Not Found"):
+           print("File not found.")
+           return None
+        else:
+            print("Saving a copy of " + filename + " in the cache...")
+
+            # Create necessary directories if they don't exist
+            new_file = "cache" + filename
+            new_file_dir = new_file[:new_file.rfind("/")] # Directory portion of filename
+            Path(new_file_dir).mkdir(parents=True, exist_ok=True)
+
+            file = open(new_file, 'wb+')
+            file.write(data)
+            file.close()
+
+        return data
 
 PORT = 8888
 
@@ -41,28 +75,33 @@ while 1:
     # Parse HTTP headers and extract filename
     headers = request.split('\n')
     top_header = headers[0].split()
-    filename = top_header[1]
 
-    # Index check
-    if filename == "/":
-        filename = "/index.html"
-        
-    response = ""
+    if len(top_header) > 1:
+        filename = top_header[1]
 
-    # Get the file and start measuring the elapsed response time
-    start_time = time.time()
-    file_content = fetch_file(filename)
-    elapsed = time.time() - start_time
+        # Index check
+        if filename == "/":
+            filename = "/index.html"
+            
+        response = ""
 
-    print("Retrieved web page in " + str(round(elapsed, 5)) + " seconds")
+        try:
+            # Get the file and start measuring the elapsed response time
+            start_time = time.time()
+            file_content = fetch_file(filename)
+            elapsed = time.time() - start_time
 
-    # Respond to client with file contents if found otherwise respond with error message
-    if file_content:
-        response = b"HTTP/1.1 200 OK\r\n\r\n" + file_content
-    else:
-        response = b"HTTP/1.1 404 NOT FOUND\r\n\r\n File Not Found"
+            # Respond to client with file contents if found otherwise respond with error message
+            if file_content:
+                print("Retrieved web page in " + str(round(elapsed, 5)) + " seconds")
+                response = b"HTTP/1.1 200 OK\r\n\r\n" + file_content
+            else:
+                response = "HTTP/1.1 404 NOT FOUND\r\n\r\n File Not Found".encode()
+        except ConnectionRefusedError: # Error handling for when the web server is not running
+            response = "HTTP/1.1 404 NOT FOUND\n\n Failed to communicate with web server".encode()
+            print("Failed to communicate with web server.")
 
-    client_connection.send(response)
+        client_connection.send(response)
 
     # Close the connection
     client_connection.close()
